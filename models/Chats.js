@@ -6,30 +6,9 @@ const Chats = {}
 Chats.scene = new Scenes.BaseScene('CHATS')
 
 Chats.scene.enter(async ctx => {
-    const parameter = ctx.update.callback_query.data.split(':')[1]
+    ctx.session.now = 'all'
 
-    const inlineKeyboard = await Chats.chatsKeyboard(parameter)
-
-    inlineKeyboard.push([
-        Markup.button.callback('💬 Чаты', 'chats:groups'),
-        Markup.button.callback('📢 Каналы', 'chats:channels'),
-        Markup.button.callback('🗿 Люди', 'chats:users'),
-        Markup.button.callback('💬 📢 🗿', 'chats:all'),
-    ])
-
-    if (chats) {
-        for (let chat of chats) {
-            inlineKeyboard.push([
-                Markup.button.callback(`${chat.chat_title}`, `chats_chat:${chat.chat_id}`),
-                Markup.button.callback('🗑', `chats_remove:${chat.chat_id}`)
-            ])
-        }
-    } else {
-        inlineKeyboard.push([Markup.button.callback('🔄 Перезагрузить', 'chats_reload')])
-    }
-
-    inlineKeyboard.push([Markup.button.callback('➕ Добавить', 'chats_add')])
-    inlineKeyboard.push([Markup.button.callback('🏠 Назад', 'home')])
+    const inlineKeyboard = await Chats.chatsKeyboard('all')
 
     ctx.editMessageText(
         '🏠 Главная / 💬 Список чатов',
@@ -37,11 +16,48 @@ Chats.scene.enter(async ctx => {
     )
 })
 
-Administrator.scene.action(/chats/, async ctx => {
+Chats.scene.action(/chats/, async ctx => {
+    const parameter = ctx.update.callback_query.data.split(':')[1]
 
+    if (ctx.session.now === parameter) return
+    ctx.session.now = parameter
+
+    const inlineKeyboard = await Chats.chatsKeyboard(parameter)
+
+    ctx.editMessageText(
+        '🏠 Главная / 💬 Список чатов',
+        {
+            reply_markup: {
+                inline_keyboard: inlineKeyboard
+            }
+        }
+    )
 })
 
-Administrator.scene.action('chats_add', ctx => {
+Chats.scene.action(/chat/, async ctx => {
+    const parameter = ctx.update.callback_query.data.split(':')[1]
+    const now = ctx.session.now
+
+    if (parameter.search('remove') !== -1) {
+        const id = parameter.split('_')[1]
+        DataBase.delete('chats', 'chat_id', id)
+            .then(async res => {
+                const inlineKeyboard = await Chats.chatsKeyboard(now)
+
+                ctx.editMessageText(
+                    '🏠 Главная / 💬 Список чатов',
+                    {
+                        reply_markup: {
+                            inline_keyboard: inlineKeyboard
+                        }
+                    }
+                )
+            })
+            .catch(err => console.log(err))
+    }
+})
+
+Chats.scene.action('chats_add', ctx => {
     ctx.editMessageText(
         `Просто добавь меня в чат или канал (в канал нужно отправить одно любоее собщение, чтобы я его запомнил) 😏`,
         {
@@ -51,36 +67,6 @@ Administrator.scene.action('chats_add', ctx => {
             }
         },
     )
-})
-
-Administrator.scene.action(/chats_remove/, ctx => {
-    const chat_id = ctx.update.callback_query.data.split(':')[1]
-    console.log(chat_id)
-    DataBase.delete('chats', 'chat_id', chat_id)
-        .then(data => {
-            console.log(data)
-            ctx.editMessageText(
-                `Убрал ☺`,
-                {
-                    parse_mode: 'HTML',
-                    reply_markup: {
-                        inline_keyboard: [[Markup.button.callback('Назад', 'chats')]]
-                    }
-                },
-            )
-        })
-        .catch(err => {
-            console.log(err)
-            ctx.editMessageText(
-                `Произошла ошибка <pre>${err.code}</pre> 😔`,
-                {
-                    parse_mode: 'HTML',
-                    reply_markup: {
-                        inline_keyboard: [[Markup.button.callback('Назад', 'chats')]]
-                    }
-                },
-            )
-        })
 })
 
 Chats.chatsKeyboard = async function(parameter) {
@@ -96,21 +82,38 @@ Chats.chatsKeyboard = async function(parameter) {
         result = await DataBase.selectWhere('chats', '*', `chat_type = 'user'`)
 
     console.log(result)
+
     const chats = result.rows
+
     const inlineKeyboard = []
+
+    inlineKeyboard.push([
+        Markup.button.callback('💬 Чаты', `chats:groups`),
+        Markup.button.callback('📢 Каналы', `chats:channels`),
+        Markup.button.callback('🗿 Люди', `chats:users`),
+        Markup.button.callback('💬 📢 🗿', `chats:all`),
+    ])
 
     if (chats) {
         for (let chat of chats) {
             inlineKeyboard.push([
-                Markup.button.callback(`${chat.chat_title}`, `chats_chat:${chat.chat_id}`),
-                Markup.button.callback('🗑', `chats_remove:${chat.chat_id}`)
+                Markup.button.callback(`${chat.chat_title}`, `chat:chat_:${chat.chat_id}`),
+                Markup.button.callback('🗑', `chat:remove_${chat.chat_id}`)
             ])
         }
     } else {
         inlineKeyboard.push([Markup.button.callback('Чатов нет', 'chats_reload')])
     }
 
+    inlineKeyboard.push([Markup.button.callback('➕ Добавить', 'chats_add')])
+    inlineKeyboard.push([Markup.button.callback('🏠 Назад', 'home')])
+
     return inlineKeyboard
 }
+
+Chats.scene.action('home', ctx => {
+    ctx.deleteMessage()
+    ctx.scene.enter('ADMINISTRATION')
+})
 
 module.exports = Chats

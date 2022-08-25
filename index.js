@@ -3,7 +3,7 @@ const Config = require('./config.js')
 
 const Administrator = require('./models/Administrator.js')
 const CreatePost = require('./models/CreatePost.js')
-const EditChats = require('./models/EditChats.js')
+const Chats = require('./models/Chats.js')
 
 const User = require('./models/User.js')
 const DataBase = require('./models/DataBase.js')
@@ -12,7 +12,7 @@ require('dotenv').config()
 const Stage = new Scenes.Stage()
 Stage.register(Administrator.scene)
 Stage.register(CreatePost.scene)
-Stage.register(EditChats.scene)
+Stage.register(Chats.scene)
 
 const bot = new Telegraf(process.env.TELEGRAM_TOKEN)
 bot.use(session()).use(Stage.middleware())
