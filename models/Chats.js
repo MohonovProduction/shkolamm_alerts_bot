@@ -73,7 +73,7 @@ Chats.chatsKeyboard = async function(parameter) {
     let result = []
 
     if (parameter === 'all')
-        result = await DataBase.select('chats', '*')
+        result = await DataBase.selectWhere('chats', '*', 'is_subscriber = true')
     if (parameter === 'groups')
         result = await DataBase.selectWhere('chats', '*', `chat_type = 'supergroup' AND is_subscriber = true`)
     if (parameter === 'channels')
