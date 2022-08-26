@@ -1,6 +1,28 @@
 const { Client } = require('pg')
 require('dotenv').config()
 
+// const { Sequelize, DataTypes } = require('sequelize')
+// //const pg = require('pg')
+//
+// const sequelize = new Sequelize(
+//     process.env.PGDATABASE,
+//     process.env.PGUSER,
+//     process.env.PGPASSWORD,
+//     {
+//         host: process.env.PGHOST,
+//         dialect: 'postgres'
+//     }
+// )
+//
+// const queryInterface = sequelize.getQueryInterface()
+//
+// try {
+//     sequelize.authenticate()
+//         .then(data => console.log(data))
+// } catch (error) {
+//     console.error('Unable to connect to the database:', error);
+// }
+
 const client = new Client({
     user: process.env.PGUSER,
     host: process.env.PGHOST,
@@ -51,8 +73,8 @@ DataBase.selectWhere = async function(table, columns, condition) {
 
 DataBase.addChat = async function(chat_id, chat_title, chat_type) {
     return new Promise(((resolve, reject) => {
-        let query = `INSERT INTO chats (chat_id, chat_title, chat_type)`
-        query += `VALUES (${chat_id}, '${chat_title}', '${chat_type}')`
+        let query = `INSERT INTO chats (chat_id, chat_title, chat_type, is_subscriber)`
+        query += `VALUES (${chat_id}, '${chat_title}', '${chat_type}', true)`
         console.log(query)
         client.query(query)
             .then(data => resolve(data))

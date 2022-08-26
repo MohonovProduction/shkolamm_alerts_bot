@@ -10,8 +10,8 @@ Chats.scene.enter(async ctx => {
 
     const inlineKeyboard = await Chats.chatsKeyboard('all')
 
-    ctx.editMessageText(
-        '🏠 Главная / 💬 Список чатов',
+    ctx.reply(
+        '💬 Список чатов',
         new Markup.inlineKeyboard(inlineKeyboard)
     )
 })
@@ -25,7 +25,7 @@ Chats.scene.action(/chats/, async ctx => {
     const inlineKeyboard = await Chats.chatsKeyboard(parameter)
 
     ctx.editMessageText(
-        '🏠 Главная / 💬 Список чатов',
+        '💬 Список чатов',
         {
             reply_markup: {
                 inline_keyboard: inlineKeyboard
@@ -75,11 +75,11 @@ Chats.chatsKeyboard = async function(parameter) {
     if (parameter === 'all')
         result = await DataBase.select('chats', '*')
     if (parameter === 'groups')
-        result = await DataBase.selectWhere('chats', '*', `chat_type = 'supergroup'`)
+        result = await DataBase.selectWhere('chats', '*', `chat_type = 'supergroup' AND is_subscriber = true`)
     if (parameter === 'channels')
-        result = await DataBase.selectWhere('chats', '*', `chat_type = 'channel'`)
+        result = await DataBase.selectWhere('chats', '*', `chat_type = 'channel' AND is_subscriber = true`)
     if (parameter === 'users')
-        result = await DataBase.selectWhere('chats', '*', `chat_type = 'user'`)
+        result = await DataBase.selectWhere('chats', '*', `chat_type = 'user' AND is_subscriber = true`)
 
     console.log(result)
 
@@ -106,14 +106,8 @@ Chats.chatsKeyboard = async function(parameter) {
     }
 
     inlineKeyboard.push([Markup.button.callback('➕ Добавить', 'chats_add')])
-    inlineKeyboard.push([Markup.button.callback('🏠 Назад', 'home')])
 
     return inlineKeyboard
 }
-
-Chats.scene.action('home', ctx => {
-    ctx.deleteMessage()
-    ctx.scene.enter('ADMINISTRATION')
-})
 
 module.exports = Chats
