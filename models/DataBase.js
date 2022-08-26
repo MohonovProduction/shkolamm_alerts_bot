@@ -37,7 +37,7 @@ DataBase.selectWhere = async function(table, columns, condition) {
         } else {
             query += ` ${columns[0]}`
             for (let i = 1; columns.length > i; i++) query += `, ${columns[i]}`
-            query += ` FROM ${table};`
+            query += ` FROM ${table}`
         }
         query += ` WHERE ${condition};`
 
@@ -85,6 +85,7 @@ DataBase.addPost = async function(post) {
 DataBase.update = async function(table_name, column, value, condition) {
     return new Promise((resolve, reject) => {
         const query = `UPDATE ${table_name} SET ${column} = ${value} WHERE ${condition}`
+        console.log('QUERY', query)
         client.query(query)
             .then(data => resolve(data))
             .catch(err => reject(err))
