@@ -1,9 +1,7 @@
 const Config = {}
 
 Config.commands = [
-    //{ command: '/start', description: 'начать' },
-    { command: '/subscribe', description: 'подписаться' },
-    { command: '/unsubscribe', description: 'отписаться' }
+    { command: '/subscription', description: 'управление подпиской' },
 ]
 
 Config.allChatCommands = Config.commands

@@ -35,7 +35,7 @@ Posts.scene.action('menu', ctx => {
     )
 })
 
-Posts.scene.action(/view_Posts/, async ctx => {
+Posts.scene.action(/view_post/, async ctx => {
     const parameter = ctx.update.callback_query.data.split(':')[1]
 
     await Posts.sendPost(ctx, Posts.posts[parameter], ctx.session.message.from.id)
@@ -53,9 +53,9 @@ Posts.scene.action(/view_Posts/, async ctx => {
 Posts.scene.action(/cancel_send/, ctx => {
     const parameter = Number(ctx.update.callback_query.data.split(':')[1])
 
-    Posts.posts.splice(parameter, 1)
-
     clearTimeout(Posts.posts[parameter].timeoutID)
+
+    Posts.posts.splice(parameter, 1)
 
     ctx.editMessageText(
         'Пост удалён',
@@ -408,7 +408,7 @@ Posts.scene.action(/send/, async ctx => {
         .catch(err => console.log('ADD Posts ERR', err))
 
     const inlineKeyboard = [
-        [Markup.button.callback('📝 В меню', 'menu')]
+        [Markup.button.callback('📝 Список постов', 'menu')]
     ]
 
     const timeoutID = setTimeout(
@@ -439,7 +439,7 @@ Posts.scene.action(/send/, async ctx => {
 
             setTimeout(
                 (ctx, inlineKeyboard) => {
-                    Posts.splice(post_id, 1)
+                    Posts.posts.splice(post_id, 1)
 
                     ctx.reply(
                         'Сообщения отправлены',

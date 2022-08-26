@@ -1,28 +1,6 @@
 const { Client } = require('pg')
 require('dotenv').config()
 
-// const { Sequelize, DataTypes } = require('sequelize')
-// //const pg = require('pg')
-//
-// const sequelize = new Sequelize(
-//     process.env.PGDATABASE,
-//     process.env.PGUSER,
-//     process.env.PGPASSWORD,
-//     {
-//         host: process.env.PGHOST,
-//         dialect: 'postgres'
-//     }
-// )
-//
-// const queryInterface = sequelize.getQueryInterface()
-//
-// try {
-//     sequelize.authenticate()
-//         .then(data => console.log(data))
-// } catch (error) {
-//     console.error('Unable to connect to the database:', error);
-// }
-
 const client = new Client({
     user: process.env.PGUSER,
     host: process.env.PGHOST,
@@ -61,7 +39,7 @@ DataBase.selectWhere = async function(table, columns, condition) {
             for (let i = 1; columns.length > i; i++) query += `, ${columns[i]}`
             query += ` FROM ${table};`
         }
-        query += ` WHERE ${condition}`
+        query += ` WHERE ${condition};`
 
         console.log('QUERY', query)
 

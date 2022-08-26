@@ -43,7 +43,7 @@ bot.command('chats', ctx => ctx.scene.enter('CHATS'))
 
 bot.command('posts', ctx => ctx.scene.enter('POSTS'))
 
-bot.command('subscribe', ctx => {
+bot.command('subscription', ctx => {
     console.log(ctx, ctx.message.from.id)
 
     const chat_id = ctx.message.from.id
@@ -51,10 +51,6 @@ bot.command('subscribe', ctx => {
     DataBase.update('chats', 'is_subscriber', true, `chat_id = ${chat_id}`)
         .then(res => console.log(res))
         .catch(err => console.log(err))
-})
-
-bot.command('unsubscribe', ctx => {
-
 })
 
 bot.on('new_chat_members', ctx => {
@@ -88,7 +84,5 @@ bot.on('channel_post', ctx => {
         .then(data => console.log(data))
         .catch(err => console.log(err))
 })
-
-bot.settings( ctx => ctx.reply('settings') )
 
 bot.launch()
