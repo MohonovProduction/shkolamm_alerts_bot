@@ -15,10 +15,11 @@ Subscription.scene.enter(async ctx => {
     )
 
     let parameter = res.rows[0].is_subscriber
+    console.log('PARAMETER', parameter)
 
     const inlineKeyboard = [
         [Markup.button.callback(
-            (parameter) ? 'Отписаться' : 'Подписаться',
+            (!parameter) ? 'Подписаться' : 'Отписаться',
             `manage:${parameter}`
         )]
     ]
@@ -34,14 +35,12 @@ Subscription.scene.enter(async ctx => {
 })
 
 Subscription.scene.action(/manage/, ctx => {
-    const parameter = ctx.update.callback_query.data.split(':')[1]
+    const parameter = !(ctx.update.callback_query.data.split(':')[1] === 'true')
+    console.log('PARAMETER 2', parameter)
     const chat_id = ctx.update.callback_query.from.id
 
-    ctx.telegram.sendChatAction(chat_id, 'typing')
-
-    DataBase.update('chats', 'is_subscriber', !parameter, `chat_id = ${chat_id}`)
+    DataBase.update('chats', 'is_subscriber', parameter, `chat_id = ${chat_id}`)
         .then(res => {
-            console.log(res)
             const text = (parameter) ? 'Подписка теперь активна 🥳' : 'Подписка теперь неактивна 😔'
             ctx.editMessageText(text)
         })
