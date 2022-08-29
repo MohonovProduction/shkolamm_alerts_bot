@@ -6,7 +6,7 @@ const Chats = require('./models/Chats.js')
 const Subscription = require('./models/Subscription.js')
 
 const DataBase = require('./models/DataBase.js')
-require('dotenv/config')
+require('dotenv').config({ path: "./.env" })
 
 const Stage = new Scenes.Stage()
 Stage.register(Posts.scene)
