@@ -34,6 +34,11 @@ Chats.scene.action(/chats/, async ctx => {
     )
 })
 
+Chats.scene.action('close_scene', ctx => {
+    ctx.scene.leave()
+    ctx.deleteMessage()
+})
+
 Chats.scene.action(/chat/, async ctx => {
     const parameter = ctx.update.callback_query.data.split(':')[1]
     const now = ctx.session.now
@@ -106,6 +111,7 @@ Chats.chatsKeyboard = async function(parameter) {
     }
 
     inlineKeyboard.push([Markup.button.callback('➕ Добавить', 'chats_add')])
+    inlineKeyboard.push([Markup.button.callback('🔙 Закрыть', 'close_scene')])
 
     return inlineKeyboard
 }

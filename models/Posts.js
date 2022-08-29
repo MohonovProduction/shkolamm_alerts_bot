@@ -37,6 +37,11 @@ Posts.scene.action('menu', ctx => {
     )
 })
 
+Posts.scene.action('close_scene', ctx => {
+    ctx.scene.leave()
+    ctx.deleteMessage()
+})
+
 Posts.scene.action(/view_post/, async ctx => {
     const parameter = ctx.update.callback_query.data.split(':')[1]
 
@@ -508,6 +513,7 @@ Posts.keyboard = function(posts) {
     }
 
     inlineKeyboard.push([Markup.button.callback('➕ Добавить', 'add')])
+    inlineKeyboard.push([Markup.button.callback('🔙 Закрыть', 'close_scene')])
 
     return inlineKeyboard
 }
