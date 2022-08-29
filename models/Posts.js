@@ -3,10 +3,18 @@ const DataBase = require('./DataBase')
 
 const Posts  = {}
 
+let needRecovery = true
+
 Posts.scene = new Scenes.BaseScene('POSTS')
 
-Posts.scene.enter(ctx => {
+Posts.scene.enter(async ctx => {
     console.log(Posts.posts)
+    console.log('NEED RECOVERY', needRecovery)
+
+    if (needRecovery) {
+        await Posts.recovery(ctx).then(() => console.log('POSTS IS RECOVERED'))
+        needRecovery = false
+    }
 
     const inlineKeyboard = Posts.keyboard(Posts.posts)
 
@@ -44,8 +52,9 @@ Posts.scene.action('close_scene', ctx => {
 
 Posts.scene.action(/view_post/, async ctx => {
     const parameter = ctx.update.callback_query.data.split(':')[1]
+    console.log(ctx.update.callback_query.message)
 
-    await Posts.sendPost(ctx, Posts.posts[parameter], ctx.session.message.from.id)
+    await Posts.sendPost(ctx, Posts.posts[parameter], ctx.update.callback_query.message.chat.id)
 
     await ctx.reply(
         'Назад',
@@ -57,10 +66,13 @@ Posts.scene.action(/view_post/, async ctx => {
     )
 })
 
-Posts.scene.action(/cancel_send/, ctx => {
+Posts.scene.action(/cancel_send/, async ctx => {
     const parameter = Number(ctx.update.callback_query.data.split(':')[1])
+    const post = Posts.posts[parameter]
+    console.log('POST ', post)
 
-    clearTimeout(Posts.posts[parameter].timeoutID)
+    clearTimeout(post.timeoutID)
+    await DataBase.update('posts', 'publication_time', '0', `publication_time = ${post.time}`)
 
     Posts.posts.splice(parameter, 1)
 
@@ -235,7 +247,6 @@ Posts.scene.action(/select_chats/, async ctx => {
 
     for (let id in chats) {
         const el = chats[id]
-        console.log(el)
         const text = (chats[id].checked) ? `🔹 ${el.chat_title}` : el.chat_title
         inlineKeyboard.push([
             Markup.button.callback(
@@ -261,10 +272,6 @@ Posts.scene.action(/select_chats/, async ctx => {
 })
 
 Posts.scene.action(/add_chat/, ctx => {
-    //TODO: add chats to session
-
-    console.log(ctx.update.callback_query.message)
-
     const chat_id = ctx.update.callback_query.data.split(':')[1]
 
     const inlineKeyboard = ctx.update.callback_query.message.reply_markup.inline_keyboard
@@ -309,14 +316,11 @@ Posts.scene.action(/set_timeout/, ctx => {
         const method = parameter.split('_')[0]
         const key = parameter.split('_')[1]
 
-        console.log(method, key)
-
         let operation = (method === 'add') ? 1 : -1
 
         switch (key) {
             case 'hours':
                 date.setHours(date.getHours() + operation)
-                console.log(date.getHours() + operation)
                 break
             case 'minutes':
                 date.setMinutes(date.getMinutes() + operation)
@@ -332,8 +336,7 @@ Posts.scene.action(/set_timeout/, ctx => {
                 break
         }
 
-        ctx.session.time = new Date(date)
-        date = new Date(date)
+        ctx.session.time = date
 
         console.log('DATE', ctx.session.time)
     }
@@ -402,15 +405,19 @@ Posts.scene.action(/send/, async ctx => {
         if (el.checked) chats.push(el)
     })
 
-    Posts.chats = chats
+    post.chats = chats
 
-    const now = new Date()
-    const timeout = (parameter === 'now') ? 1 : ctx.session.time.getTime() - now
+    console.log('TIME FROM CTX', ctx.session.time)
+    const time = ('time' in ctx.session) ? new Date(ctx.session.time).getTime() : 0
+    const now = Date.now()
+    const timeout = (parameter === 'now') ? 1 : time - now
+
+    console.log('TIMEOUT TIME', timeout, time)
 
     post.createTime = now
-    post.sendTime = timeout
+    post.time = time
 
-    DataBase.addPost(post)
+    await DataBase.addPost(post, time)
         .then(res => console.log('ADD Posts', res))
         .catch(err => console.log('ADD Posts ERR', err))
 
@@ -472,12 +479,13 @@ Posts.scene.action(/send/, async ctx => {
         inlineKeyboard
     )
 
-    post.time = ctx.session.time
     post.timeoutID = timeoutID
 
     Posts.posts.push(post)
 
     console.log('AFTER PUSH', Posts.posts)
+
+    ctx.session.now = ''
 
     if (parameter === 'schedule') {
         ctx.editMessageText(
@@ -489,9 +497,95 @@ Posts.scene.action(/send/, async ctx => {
             }
         )
     }
+
+    ctx.session = {}
 })
 
 Posts.posts = []
+
+Posts.recovery = async function(ctx) {
+    const now = Date.now()
+    const res = await DataBase.selectWhere('posts', ['post', 'publication_time'], `publication_time > ${now}`)
+    const rows = res.rows
+
+    if (!rows) return
+
+    console.log(rows)
+
+    for (let id in rows) {
+        const row = rows[id]
+        const posts = Posts.posts
+        const post = row.post
+        const post_id = id
+        const now = Date.now()
+        const timeout = row.publication_time - now
+        const chats = row.post.chats
+
+        const inlineKeyboard = [
+            [Markup.button.callback('📝 Список постов', 'menu')]
+        ]
+
+        const timeoutID = setTimeout(
+            (ctx, chats, post, posts, inlineKeyboard) => {
+                console.log(chats)
+
+                let sendTurn = 0
+
+                for (let chat of chats) {
+                    console.log('CHAT', chat)
+
+                    setTimeout(
+                        (ctx, chat, post) => {
+                            Posts.sendPost(ctx, post, chat.chat_id)
+                                .then(() => ctx.reply(`Сообщение отправлено в ${chat.chat_title}`))
+                                .catch(err => ctx.reply(`${JSON.stringify(err)}`))
+                        },
+                        sendTurn * 3000,
+                        ctx,
+                        chat,
+                        post,
+                    )
+
+                    sendTurn++
+
+                    console.log(Date.now())
+                }
+
+                setTimeout(
+                    (ctx, inlineKeyboard) => {
+                        Posts.posts.splice(post_id, 1)
+
+                        ctx.reply(
+                            'Сообщения отправлены',
+                            {
+                                reply_markup: {
+                                    inline_keyboard: inlineKeyboard
+                                }
+                            }
+                        )
+                    },
+                    sendTurn * 3000,
+                    ctx,
+                    inlineKeyboard,
+                    post_id,
+                    post,
+                )
+            },
+            timeout,
+            ctx,
+            chats,
+            post,
+            posts,
+            inlineKeyboard
+        )
+
+        post.timeoutID = timeoutID
+
+        Posts.posts.push(post)
+
+        console.log('AFTER PUSH', Posts.posts)
+    }
+}
 
 Posts.keyboard = function(posts) {
     const inlineKeyboard = []
@@ -501,7 +595,7 @@ Posts.keyboard = function(posts) {
 
         const title = text.split('').splice(0, 20).join('')
 
-        const date = posts[id].time
+        const date = new Date(posts[id].time)
         const dateText = `${date.getDate()}/${date.getMonth()} ${date.getHours()}:${date.getMinutes()}`
 
         inlineKeyboard.push([

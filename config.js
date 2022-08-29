@@ -18,6 +18,6 @@ Config.administrators = [
     5033587882,
 ]
 
-Config.botId = 2055969653
+Config.botId = 2055969653 //5199739718
 
 module.exports = Config

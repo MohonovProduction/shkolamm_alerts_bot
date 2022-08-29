@@ -71,10 +71,10 @@ DataBase.addTeacher = async function(teacher_id, teacher_username, teacher_name)
     }))
 }
 
-DataBase.addPost = async function(post) {
+DataBase.addPost = async function(post, publication_time) {
     return new Promise(((resolve, reject) => {
-        let query = `INSERT INTO posts (post)`
-        query += ` VALUES ('${JSON.stringify(post)}');`
+        let query = `INSERT INTO posts (post, publication_time)`
+        query += ` VALUES ('${JSON.stringify(post)}', ${publication_time});`
         console.log(query)
         client.query(query)
             .then(data => resolve(data))
