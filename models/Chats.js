@@ -106,7 +106,6 @@ Chats.chatsKeyboard = async function(parameter) {
     }
 
     inlineKeyboard.push([Markup.button.callback('➕ Добавить', 'chats_add')])
-    inlineKeyboard.push([Markup.button.callback('Закрыть', 'close')])
 
     return inlineKeyboard
 }
