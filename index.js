@@ -8,6 +8,8 @@ const Subscription = require('./models/Subscription.js')
 const DataBase = require('./models/DataBase.js')
 require('dotenv').config({ path: "./.env" })
 
+console.log(process.env)
+
 const Stage = new Scenes.Stage()
 Stage.register(Posts.scene)
 Stage.register(Chats.scene)
