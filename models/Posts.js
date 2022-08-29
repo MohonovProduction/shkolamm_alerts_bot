@@ -23,6 +23,8 @@ Posts.scene.enter(ctx => {
 Posts.scene.action('menu', ctx => {
     console.log(Posts.posts)
 
+    ctx.session.now = ''
+
     const inlineKeyboard = Posts.keyboard(Posts.posts)
 
     ctx.editMessageText(
@@ -189,7 +191,7 @@ Posts.scene.action(/select_chats/, async ctx => {
     let edited = 0
 
     if (parameter === 'start') {
-        let res = await DataBase.select('chats', '*')
+        let res = await DataBase.selectWhere('chats', '*', 'is_subscriber = true')
         chats = res.rows
 
         for (let el of chats) el.checked = false
