@@ -34,10 +34,12 @@ bot.start(async ctx => {
         .then(res => console.log('ADD USER', res))
         .catch(err => console.log('ADD USER ERR', err))
 
-    if (Config.administrators.includes(ctx.message.from.id)) {
-        ctx.reply('Administration reply')
+    const id = ctx.message.from.id
+
+    if (Config.administrators.includes(id)) {
+        ctx.reply(`Привет ${id} ☺\n\nПодписка активна\n\/subscription - управление подпиской\n\n\/chats - управление чатами (удалить, узнать как добавить)\n\n\/posts - управление постами (добавить, отложить, просмотреть оложенные)`)
     } else {
-        ctx.reply('User reply')
+        ctx.reply('Привет ☺\n\nПодписка активна\n\/subscription - управление подпиской')
     }
 })
 
