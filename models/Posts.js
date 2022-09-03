@@ -186,7 +186,7 @@ Posts.scene.action('publication', ctx => {
     const inlineKeyboard = [
         [
             Markup.button.callback('📝 Назад', 'view_draft'),
-            Markup.button.callback('💬 Выбрать чаты', 'select_chats:start')
+            Markup.button.callback('💬 Выбрать чаты', 'select_chats:all')
         ]
     ]
 
@@ -203,29 +203,27 @@ Posts.scene.action('publication', ctx => {
 Posts.scene.action(/select_chats/, async ctx => {
     const parameter = ctx.update.callback_query.data.split(':')[1]
 
-    let chats = []
-
     let edited = 0
 
-    if (parameter === 'start') {
-        let res = await DataBase.selectWhere('chats', '*', 'is_subscriber = true')
-        chats = res.rows
+    if (ctx.session.condition === parameter) return
+    ctx.session.condition = parameter
+    edited++
 
-        for (let el of chats) el.checked = false
+    let result = undefined
 
-        ctx.session.chats = res.rows
+    if (parameter === 'all')
+        result = await DataBase.selectWhere('chats', '*', 'is_subscriber = true')
+    else if (parameter === 'groups')
+        result = await DataBase.selectWhere('chats', '*', `chat_type = 'supergroup' AND is_subscriber = true`)
+    else if (parameter === 'channels')
+        result = await DataBase.selectWhere('chats', '*', `chat_type = 'channel' AND is_subscriber = true`)
+    else if (parameter === 'users')
+        result = await DataBase.selectWhere('chats', '*', `chat_type = 'user' AND is_subscriber = true`)
 
-        edited++
-    } else {
-        chats = ctx.session.chats
-    }
+    console.log(result)
+    const chats = result.rows
 
-    const inlineKeyboard = []
-
-    inlineKeyboard.push([
-        Markup.button.callback('Выбрать все', 'select_chats:add_all'),
-        Markup.button.callback('Убрать все', 'select_chats:remove_all')
-    ])
+    for (let el of chats) el.checked = false
 
     if (parameter === 'add_all') chats.forEach(el => {
         if (el.checked === false) edited++
@@ -245,6 +243,22 @@ Posts.scene.action(/select_chats/, async ctx => {
 
     if (edited === 0) return
 
+    ctx.session.chats = chats
+
+    const inlineKeyboard = []
+
+    inlineKeyboard.push([
+        Markup.button.callback('💬 Чаты', `select_chats:groups`),
+        Markup.button.callback('📢 Каналы', `select_chats:channels`),
+        Markup.button.callback('🗿 Люди', `select_chats:users`),
+        Markup.button.callback('💬 📢 🗿', `select_chats:all`),
+    ])
+
+    inlineKeyboard.push([
+        Markup.button.callback('Выбрать все', 'select_chats:add_all'),
+        Markup.button.callback('Убрать все', 'select_chats:remove_all')
+    ])
+
     for (let id in chats) {
         const el = chats[id]
         const text = (chats[id].checked) ? `🔹 ${el.chat_title}` : el.chat_title
@@ -260,35 +274,6 @@ Posts.scene.action(/select_chats/, async ctx => {
         Markup.button.callback('⏲ Отложить', 'set_timeout:start'),
         Markup.button.callback('📢 Опубликовать', 'send_verified'),
     ])
-
-    ctx.editMessageText(
-        'Выбери чаты или каналы для рассылки',
-        {
-            reply_markup: {
-                inline_keyboard: inlineKeyboard
-            }
-        }
-    )
-})
-
-Posts.scene.action(/add_chat/, ctx => {
-    const chat_id = ctx.update.callback_query.data.split(':')[1]
-
-    const inlineKeyboard = ctx.update.callback_query.message.reply_markup.inline_keyboard
-
-    for (let id in inlineKeyboard) {
-        const el = inlineKeyboard[id][0]
-        const el_id = el['callback_data'].split(':')[1]
-        if (el_id === chat_id) {
-            if (el.text.search(/🔹/) === -1) {
-                inlineKeyboard[id][0].text = `🔹 ${el.text}`
-                inlineKeyboard[id][0].callback_data = `${el.callback_data}:checked`
-            } else {
-                inlineKeyboard[id][0].text = el.text.replace('🔹 ', '')
-                inlineKeyboard[id][0].callback_data = el.callback_data.replace(':checked', '')
-            }
-        }
-    }
 
     ctx.editMessageText(
         'Выбери чаты или каналы для рассылки',
@@ -362,7 +347,7 @@ Posts.scene.action(/set_timeout/, ctx => {
     }
 
     inlineKeyboard.push([
-        Markup.button.callback('📝 Назад', 'select_chats:start'),
+        Markup.button.callback('📝 Назад', 'select_chats:all'),
         Markup.button.callback('⏲ Отложить', 'send:schedule')
 
     ])

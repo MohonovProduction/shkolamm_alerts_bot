@@ -14,10 +14,10 @@ Config.administratorsCommands = Config.commands.concat([
 
 Config.administrators = [
     656626574,
-    784434119,
-    5033587882,
+    //784434119,
+    //5033587882,
 ]
 
-Config.botId = 2055969653 //5199739718
+Config.botId = 5199739718 //2055969653
 
 module.exports = Config

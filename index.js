@@ -34,17 +34,22 @@ bot.start(async ctx => {
         .then(res => console.log('ADD USER', res))
         .catch(err => console.log('ADD USER ERR', err))
 
-    const id = ctx.message.from.id
-    if (Config.administrators.indexOf(id) !== -1) {
+    if (Config.administrators.includes(ctx.message.from.id)) {
         ctx.reply('Administration reply')
     } else {
         ctx.reply('User reply')
     }
 })
 
-bot.command('chats', ctx => ctx.scene.enter('CHATS'))
+bot.command('chats', ctx => {
+    if (Config.administrators.includes(ctx.update.message.from.id))
+        ctx.scene.enter('CHATS')
+})
 
-bot.command('posts', ctx => ctx.scene.enter('POSTS'))
+bot.command('posts', ctx => {
+    if (Config.administrators.includes(ctx.update.message.from.id))
+        ctx.scene.enter('POSTS')
+})
 
 bot.command('subscription', ctx => ctx.scene.enter('SUBSCRIPTION'))
 
