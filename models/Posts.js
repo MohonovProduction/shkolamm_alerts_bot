@@ -186,7 +186,7 @@ Posts.scene.action('publication', ctx => {
     const inlineKeyboard = [
         [
             Markup.button.callback('📝 Назад', 'view_draft'),
-            Markup.button.callback('💬 Выбрать чаты', 'select_chats:all')
+            Markup.button.callback('💬 Выбрать чаты', 'select_chats:-all')
         ]
     ]
 
@@ -201,62 +201,83 @@ Posts.scene.action('publication', ctx => {
 })
 
 Posts.scene.action(/select_chats/, async ctx => {
-    const parameter = ctx.update.callback_query.data.split(':')[1]
+    // get args of select_chats
+    // get parameter (select all, remove all, change) and filter
+    // change elements if need
+    // change arr in session
+    // filter arr
+    // create buttons
+    // edit message
 
-    let edited = 0
+    const arguments = ctx.update.callback_query.data.split(':')[1]
 
-    if (ctx.session.condition === parameter) return
-    ctx.session.condition = parameter
-    edited++
+    const parameter = arguments.split('-')[0]
+    const filter = arguments.split('-')[1]
 
-    let result = undefined
+    console.log('PARAMETER', parameter, 'FILTER', filter)
 
-    if (parameter === 'all')
-        result = await DataBase.selectWhere('chats', '*', 'is_subscriber = true')
-    else if (parameter === 'groups')
-        result = await DataBase.selectWhere('chats', '*', `chat_type = 'supergroup' AND is_subscriber = true`)
-    else if (parameter === 'channels')
-        result = await DataBase.selectWhere('chats', '*', `chat_type = 'channel' AND is_subscriber = true`)
-    else if (parameter === 'users')
-        result = await DataBase.selectWhere('chats', '*', `chat_type = 'user' AND is_subscriber = true`)
+    if (ctx.session.arguments === arguments && arguments.indexOf('change') === -1) return
 
-    console.log(result)
-    const chats = result.rows
+    ctx.session.arguments = arguments
 
-    for (let el of chats) el.checked = false
+    if (!('chats' in ctx.session)) {
+        const result = await DataBase.selectWhere('chats', '*', 'is_subscriber = true')
+        result.rows.forEach(el => el.checked = false)
+        ctx.session.chats = result.rows
+    }
+
+    let chats = [...ctx.session.chats]
+
+    console.log('CHATS', chats)
+
+    let edited = false
 
     if (parameter === 'add_all') chats.forEach(el => {
-        if (el.checked === false) edited++
-        el.checked = true
+        if ((filter === 'all' || el.chat_type === filter) && (el.checked === false))
+            el.checked = true
+            edited = true
     })
 
     if (parameter === 'remove_all') chats.forEach(el => {
-        if (el.checked === true) edited++
-        el.checked = false
+        if ((filter === 'all' || el.chat_type === filter) && (el.checked === true))
+            el.checked = false
+            edited = true
     })
 
     if (parameter.search('change') !== -1) {
         const key = parameter.split('_')[1]
-        chats[key].checked = !chats[key].checked
-        edited++
+        const el = chats[key]
+        if (filter === 'all' || el.chat_type === filter)
+            el.checked = !el.checked
+            edited = true
     }
 
-    if (edited === 0) return
+    ctx.session.chats = [...chats]
 
-    ctx.session.chats = chats
+    const initialChatsLength = chats.length
+
+    if (filter !== 'all')
+        chats = chats.filter(el => el.chat_type === filter)
+
+    if (initialChatsLength === 0 && chats.length === 0)
+        return
+    else
+        edited = true
+
+    if (edited === false) return
 
     const inlineKeyboard = []
 
     inlineKeyboard.push([
-        Markup.button.callback('💬 Чаты', `select_chats:groups`),
-        Markup.button.callback('📢 Каналы', `select_chats:channels`),
-        Markup.button.callback('🗿 Люди', `select_chats:users`),
-        Markup.button.callback('💬 📢 🗿', `select_chats:all`),
+        Markup.button.callback('💬 Чаты', `select_chats:-supergroup`),
+        Markup.button.callback('📢 Каналы', `select_chats:-channel`),
+        Markup.button.callback('🗿 Люди', `select_chats:-user`),
+        Markup.button.callback('💬 📢 🗿', `select_chats:-all`),
     ])
 
     inlineKeyboard.push([
-        Markup.button.callback('Выбрать все', 'select_chats:add_all'),
-        Markup.button.callback('Убрать все', 'select_chats:remove_all')
+        Markup.button.callback('Выбрать все', `select_chats:add_all-${filter}`),
+        Markup.button.callback('Убрать все', `select_chats:remove_all-${filter}`)
     ])
 
     for (let id in chats) {
@@ -265,7 +286,7 @@ Posts.scene.action(/select_chats/, async ctx => {
         inlineKeyboard.push([
             Markup.button.callback(
                  text,
-                `select_chats:change_${id}`)
+                `select_chats:change_${id}-${filter}`)
         ])
     }
 
@@ -347,7 +368,7 @@ Posts.scene.action(/set_timeout/, ctx => {
     }
 
     inlineKeyboard.push([
-        Markup.button.callback('📝 Назад', 'select_chats:all'),
+        Markup.button.callback('📝 Назад', 'select_chats:-all'),
         Markup.button.callback('⏲ Отложить', 'send:schedule')
 
     ])
@@ -483,7 +504,6 @@ Posts.scene.action(/send/, async ctx => {
         )
     }
 
-    ctx.session = {}
 })
 
 Posts.posts = []
