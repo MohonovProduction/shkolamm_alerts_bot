@@ -491,7 +491,12 @@ Posts.scene.action(/send/, async ctx => {
 
     console.log('AFTER PUSH', Posts.posts)
 
-    ctx.session.now = ''
+    console.log('SESSION', ctx.session)
+    delete ctx.session.now
+    delete ctx.session.post
+    delete ctx.session.chats
+    delete ctx.session.message
+    delete ctx.session.arguments
 
     if (parameter === 'schedule') {
         ctx.editMessageText(
