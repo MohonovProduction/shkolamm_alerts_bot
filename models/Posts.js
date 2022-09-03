@@ -46,6 +46,12 @@ Posts.scene.action('menu', ctx => {
 })
 
 Posts.scene.action('close_scene', ctx => {
+    delete ctx.session.now
+    delete ctx.session.post
+    delete ctx.session.chats
+    delete ctx.session.message
+    delete ctx.session.arguments
+
     ctx.scene.leave()
     ctx.deleteMessage()
 })
@@ -186,7 +192,7 @@ Posts.scene.action('publication', ctx => {
     const inlineKeyboard = [
         [
             Markup.button.callback('📝 Назад', 'view_draft'),
-            Markup.button.callback('💬 Выбрать чаты', 'select_chats:-all')
+            Markup.button.callback('💬 Выбрать чаты', 'select_chats:start-all')
         ]
     ]
 
@@ -216,7 +222,8 @@ Posts.scene.action(/select_chats/, async ctx => {
 
     console.log('PARAMETER', parameter, 'FILTER', filter)
 
-    if (ctx.session.arguments === arguments && arguments.indexOf('change') === -1) return
+    console.log('CHECK ARGUMENTS')
+    if (parameter !== 'start' && ctx.session.arguments === arguments && arguments.indexOf('change') === -1) return
 
     ctx.session.arguments = arguments
 
@@ -227,8 +234,6 @@ Posts.scene.action(/select_chats/, async ctx => {
     }
 
     let chats = [...ctx.session.chats]
-
-    console.log('CHATS', chats)
 
     let edited = false
 
@@ -259,11 +264,13 @@ Posts.scene.action(/select_chats/, async ctx => {
     if (filter !== 'all')
         chats = chats.filter(el => el.chat_type === filter)
 
+    console.log('CHECK LENGTH')
     if (initialChatsLength === 0 && chats.length === 0)
         return
     else
         edited = true
 
+    console.log('CHECK EDITED')
     if (edited === false) return
 
     const inlineKeyboard = []
@@ -368,7 +375,7 @@ Posts.scene.action(/set_timeout/, ctx => {
     }
 
     inlineKeyboard.push([
-        Markup.button.callback('📝 Назад', 'select_chats:-all'),
+        Markup.button.callback('📝 Назад', 'select_chats:start-all'),
         Markup.button.callback('⏲ Отложить', 'send:schedule')
 
     ])
@@ -386,7 +393,7 @@ Posts.scene.action(/set_timeout/, ctx => {
 
 Posts.scene.action('send_verified', ctx => {
     const inlineKeyboard = [[
-        Markup.button.callback('📝 Назад', 'publication'),
+        Markup.button.callback('📝 Назад', 'select_chats:start-all'),
         Markup.button.callback('📢 Опубликовать', 'send:now')
     ]]
 
@@ -489,9 +496,6 @@ Posts.scene.action(/send/, async ctx => {
 
     Posts.posts.push(post)
 
-    console.log('AFTER PUSH', Posts.posts)
-
-    console.log('SESSION', ctx.session)
     delete ctx.session.now
     delete ctx.session.post
     delete ctx.session.chats
