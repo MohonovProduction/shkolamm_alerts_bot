@@ -207,13 +207,7 @@ Posts.scene.action('publication', ctx => {
 })
 
 Posts.scene.action(/select_chats/, async ctx => {
-    // get args of select_chats
-    // get parameter (select all, remove all, change) and filter
-    // change elements if need
-    // change arr in session
-    // filter arr
-    // create buttons
-    // edit message
+
 
     const arguments = ctx.update.callback_query.data.split(':')[1]
 
@@ -264,14 +258,9 @@ Posts.scene.action(/select_chats/, async ctx => {
     if (filter !== 'all')
         chats = chats.filter(el => el.chat_type === filter)
 
-    console.log('CHECK LENGTH')
-    if (initialChatsLength === 0 && chats.length === 0)
-        return
-    else
-        edited = true
-
     console.log('CHECK EDITED')
-    if (edited === false) return
+    console.log('CHECK LENGTH')
+    if (!edited && (initialChatsLength === 0 && chats.length === 0)) return
 
     const inlineKeyboard = []
 
@@ -282,10 +271,12 @@ Posts.scene.action(/select_chats/, async ctx => {
         Markup.button.callback('💬 📢 🗿', `select_chats:-all`),
     ])
 
-    inlineKeyboard.push([
-        Markup.button.callback('Выбрать все', `select_chats:add_all-${filter}`),
-        Markup.button.callback('Убрать все', `select_chats:remove_all-${filter}`)
-    ])
+    if (chats.length > 0) {
+        inlineKeyboard.push([
+            Markup.button.callback('Выбрать все', `select_chats:add_all-${filter}`),
+            Markup.button.callback('Убрать все', `select_chats:remove_all-${filter}`)
+        ])
+    }
 
     for (let id in chats) {
         const el = chats[id]
