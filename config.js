@@ -1,5 +1,7 @@
 const Config = {}
 
+const devMode = true
+
 Config.commands = [
     { command: '/subscription', description: 'управление подпиской' },
 ]
@@ -11,13 +13,20 @@ Config.administratorsCommands = Config.commands.concat([
     { command: '/posts', description: 'посты' }
 ])
 
+if (devMode) {
+    Config.administrators = [656626574]
+} else {
+    Config.administrators = [
+        656626574,
+        784434119,
+        5033587882,
+    ]
+}
 
-Config.administrators = [
-    656626574,
-    784434119,
-    5033587882,
-]
-
-Config.botId = 2055969653 //5199739718
+if (devMode) {
+    Config.botId = 5199739718
+} else {
+    Config.botId = 2055969653
+}
 
 module.exports = Config
