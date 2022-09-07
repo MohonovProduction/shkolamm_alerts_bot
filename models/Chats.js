@@ -60,18 +60,17 @@ Chats.scene.action(/chat/, async ctx => {
             })
             .catch(err => console.log(err))
     }
-})
 
-Chats.scene.action('chats_add', ctx => {
-    ctx.editMessageText(
-        `Просто добавь меня в чат или канал (в канал нужно отправить одно любоее собщение, чтобы я его запомнил) 😏`,
-        {
-            parse_mode: 'HTML',
-            reply_markup: {
-                inline_keyboard: [[Markup.button.callback('Назад', 'chats')]]
-            }
-        },
-    )
+    if (parameter.search('add') !== -1) {
+        ctx.editMessageText(
+            `Обычному пользователю нужно написать мне /start\n\nЕсли пользоваетль/канал/чат отписан, то он не будет отображаться в списке\n\nПросто добавь меня в чат или канал (в канал нужно отправить одно любоее собщение, чтобы я его запомнил) 😏`,
+            {
+                reply_markup: {
+                    inline_keyboard: [[Markup.button.callback('Назад', 'chats')]]
+                }
+            },
+        )
+    }
 })
 
 Chats.chatsKeyboard = async function(parameter) {
@@ -110,7 +109,7 @@ Chats.chatsKeyboard = async function(parameter) {
         inlineKeyboard.push([Markup.button.callback('Чатов нет', 'chats_reload')])
     }
 
-    inlineKeyboard.push([Markup.button.callback('➕ Добавить', 'chats_add')])
+    inlineKeyboard.push([Markup.button.callback('➕ Добавить', 'chat:add')])
     inlineKeyboard.push([Markup.button.callback('🔙 Закрыть', 'close_scene')])
 
     return inlineKeyboard
