@@ -1,6 +1,6 @@
 const Config = {}
 
-const devMode = true
+const devMode = false
 
 Config.commands = [
     { command: '/subscription', description: 'управление подпиской' },
