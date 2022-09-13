@@ -1,6 +1,6 @@
 const Config = {}
 
-const devMode = false
+const devMode = true
 
 Config.commands = [
     { command: '/subscription', description: 'управление подпиской' },
@@ -20,6 +20,7 @@ if (devMode) {
         656626574,
         784434119,
         5033587882,
+        116772776,
     ]
 }
 
