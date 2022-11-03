@@ -207,8 +207,6 @@ Posts.scene.action('publication', ctx => {
 })
 
 Posts.scene.action(/select_chats/, async ctx => {
-
-
     const arguments = ctx.update.callback_query.data.split(':')[1]
 
     const parameter = arguments.split('-')[0]
@@ -460,13 +458,10 @@ Posts.scene.action(/send/, async ctx => {
                     Posts.posts.splice(post_id, 1)
 
                     ctx.reply(
-                        'Сообщения отправлены',
-                        {
-                            reply_markup: {
-                                inline_keyboard: inlineKeyboard
-                            }
-                        }
+                        'Сообщения отправлены'
                     )
+
+                    ctx.scene.leave()
                 },
                 sendTurn * 3000,
                 ctx,
@@ -504,6 +499,7 @@ Posts.scene.action(/send/, async ctx => {
         )
     }
 
+    ctx.scene.leave()
 })
 
 Posts.posts = []
